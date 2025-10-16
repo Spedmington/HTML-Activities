@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Fun Website</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #2c2f4a 0%, #3b5998 100%);
+            font-family: 'Supercell-Magic', 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #ffd700;
+            font-size: 3em;
+            margin-top: 2em;
+            text-shadow: 2px 2px 12px #1a1c2c;
+            letter-spacing: 2px;
+        }
+        #quiz-container {
+            background: rgba(255,255,255,0.07);
+            border-radius: 18px;
+            display: inline-block;
+            padding: 2em 3em;
+            margin: 2em 0;
+            box-shadow: 0 8px 32px rgba(44,47,74,0.3);
+        }
+        #card-description {
+            background: #ffe082;
+            color: #2c2f4a;
+            border-radius: 12px;
+            display: inline-block;
+            padding: 1em 2em;
+            margin: 1em 0 2em 0;
+            font-size: 1.2em;
+            box-shadow: 0 4px 16px rgba(44,47,74,0.15);
+            font-style: italic;
+        }
+        input[type="text"] {
+            padding: 0.7em 1em;
+            font-size: 1em;
+            border-radius: 8px;
+            border: 2px solid #ffd700;
+            margin-bottom: 0.5em;
+        }
+        #card-dropdown {
+            display: block;
+            margin: 0 auto 1em auto;
+            width: 60%;
+            max-width: 300px;
+            border-radius: 8px;
+            border: 1px solid #ffd700;
+            font-size: 1em;
+            background: #fffbe7;
+            color: #2c2f4a;
+        }
+        button {
+            background: #ffd700;
+            color: #2c2f4a;
+            border: none;
+            border-radius: 8px;
+            padding: 1em 2em;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(44,47,74,0.15);
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #ffe082;
+        }
+        #result {
+            margin-top: 1em;
+            font-size: 1.2em;
+        }
+        footer {
+            margin-top: 3em;
+            color: #ffd700;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clash Royale Card Quiz</h1>
+    <div id="quiz-container">
+        <div id="card-description">Loading card description...</div>
+        <input type="text" id="user-guess" placeholder="Type card name..." autocomplete="off" oninput="updateDropdown()">
+        <select id="card-dropdown" size="5" onclick="selectDropdownOption()"></select>
+        <button onclick="submitGuess()">Submit Guess</button>
+        <div id="result"></div>
+        <button onclick="nextCard()" style="margin-top:2em;">Next Card</button>
+    </div>
+    <footer>
+        <p>Made with ❤️ by GitHub Copilot</p>
+    </footer>
+    <script>
+        // Card data with less obvious, but clear descriptions
+        // All Clash Royale cards with fun, thematic descriptions
+        const cards = [
+            { name: "Archer Queen", description: "A royal marksman who can cloak herself and rain arrows with deadly precision." },
+            { name: "Arrows", description: "A swift volley from above, clearing the weak and the many in a single swoop." },
+            { name: "Baby Dragon", description: "A flying hatchling with a fiery breath, splashing flames on ground and air alike." },
+            { name: "Bandit", description: "She dashes from the shadows, striking with a blink and a smack of her mask." },
+            { name: "Barbarian Barrel", description: "A rolling cask that bursts open, unleashing a mustachioed warrior on arrival." },
+            { name: "Barbarians", description: "A rowdy group of sword-swingers, ready to brawl with anyone in their path." },
+            { name: "Bats", description: "A swarm of tiny, winged menaces that overwhelm with numbers and speed." },
+            { name: "Battle Healer", description: "She brings both pain and healing, mending allies as she swings her sword." },
+            { name: "Battle Ram", description: "Two warriors charge with a log, smashing into buildings before leaping into the fray." },
+            { name: "Bomber", description: "A skeleton with a short fuse and a big grin, tossing explosives at ground troops." },
+            { name: "Bomb Tower", description: "A sturdy structure that lobs bombs at ground enemies, then leaves a final surprise." },
+            { name: "Bowler", description: "A blue brute who rolls massive boulders, flattening all in a straight line." },
+            { name: "Cannon", description: "A classic defense, firing iron balls at ground invaders with a boom." },
+            { name: "Cannon Cart", description: "A mobile cannon that keeps rolling even after its wheels are gone." },
+            { name: "Clone", description: "A magical spell that doubles your forces, but only as fragile copies." },
+            { name: "Dark Prince", description: "A shadowy knight with a shield and a splashy, spinning attack." },
+            { name: "Dart Goblin", description: "A speedy sharpshooter with a blowgun, poking from a safe distance." },
+            { name: "Earthquake", description: "A tremor that rattles buildings and shakes up swarms, but leaves the big ones standing." },
+            { name: "Electro Dragon", description: "A stormy beast that chains lightning between foes, stunning as it goes." },
+            { name: "Electro Giant", description: "A hulking brute who zaps attackers with every step toward your towers." },
+            { name: "Electro Spirit", description: "A tiny spark that leaps between enemies, stunning them in a flash." },
+            { name: "Electro Wizard", description: "He enters with a zap and stuns with every attack, splitting his magic in two." },
+            { name: "Elite Barbarians", description: "A pair of furious fighters, faster and stronger than their kin." },
+            { name: "Elixir Golem", description: "A gift and a curse: splits into smaller golems, but gives your foe extra elixir." },
+            { name: "Elixir Collector", description: "A building that steadily fills your coffers, if left undisturbed." },
+            { name: "Ebarbs", description: "A pair of furious fighters, faster and stronger than their kin." },
+            { name: "Executioner", description: "A hooded thrower whose axe slices through air and enemies in a straight line." },
+            { name: "Fire Spirit", description: "A tiny ball of energy that leaps at enemies, exploding on contact." },
+            { name: "Fireball", description: "A blazing orb that scorches a small area, perfect for punishing clusters." },
+            { name: "Fisherman", description: "He casts his hook, pulling enemies close or himself to the action." },
+            { name: "Flying Machine", description: "A contraption that hovers above, peppering foes with rapid shots." },
+            { name: "Freeze", description: "A chilling spell that halts all in its frosty grip." },
+            { name: "Furnace", description: "A fiery forge that spawns spirits to harass your opponent." },
+            { name: "Giant", description: "A gentle giant who ignores distractions, heading straight for buildings." },
+            { name: "Giant Skeleton", description: "A massive skeleton with a bomb that spells doom for anyone nearby." },
+            { name: "Giant Snowball", description: "A frosty projectile that knocks back and slows its targets." },
+            { name: "Goblin Barrel", description: "A wooden cask that delivers a trio of green mischief-makers anywhere you choose." },
+            { name: "Goblin Cage", description: "A trap that releases a rowdy brawler when broken." },
+            { name: "Goblin Drill", description: "A burrowing contraption that pops up near enemy towers, unleashing goblins." },
+            { name: "Goblin Gang", description: "A mixed group of stabbers and throwers, overwhelming in numbers." },
+            { name: "Goblin Giant", description: "A big brute with goblins riding on his back, attacking both buildings and foes." },
+            { name: "Goblin Hut", description: "A shack that spawns spear-throwing goblins over time." },
+            { name: "Goblins", description: "A quick trio of green troublemakers, great for distracting and swarming." },
+            { name: "Golden Knight", description: "A dashing hero who chains through enemies with his golden mane." },
+            { name: "Golem", description: "A rocky behemoth that splits into two when destroyed, relentless in its march." },
+            { name: "Graveyard", description: "A spooky spell that summons skeletons at random in a haunted zone." },
+            { name: "Guards", description: "Three shielded skeletons, tough to take down until their shields break." },
+            { name: "Heal Spirit", description: "A cheerful spark that bursts into healing energy for nearby allies." },
+            { name: "Hog Rider", description: "A hammer-wielding daredevil who leaps rivers and charges buildings with a yell." },
+            { name: "Hunter", description: "A close-range blaster whose shotgun spreads out, devastating up close." },
+            { name: "Ice Golem", description: "A chilly tank that slows enemies with its frosty demise." },
+            { name: "Ice Spirit", description: "A tiny, energetic spirit that freezes everything it touches." },
+            { name: "Ice Wizard", description: "A frosty mage who chills and slows his foes with every attack." },
+            { name: "Inferno Dragon", description: "A flying menace whose fiery breath ramps up the longer it burns." },
+            { name: "Inferno Tower", description: "A defensive structure that melts the toughest enemies with a focused beam." },
+            { name: "Knight", description: "A mustachioed swordsman, reliable and ready for a duel." },
+            { name: "Lava Hound", description: "A flying tank that splits into pups upon defeat, raining fire from above." },
+            { name: "Lightning", description: "A spell that strikes the three largest targets with a thunderous zap." },
+            { name: "Lumberjack", description: "A wild axeman who drops a rage bottle when he falls." },
+            { name: "Magic Archer", description: "A mystical bowman whose arrows pierce through everything in their path." },
+            { name: "Mega Knight", description: "He lands with a bang and crushes all who stand in his way." },
+            { name: "Mega Minion", description: "A winged brute, tougher than your average minion." },
+            { name: "Miner", description: "A sneaky digger who pops up anywhere to chip away at his target." },
+            { name: "Mini P.E.K.K.A", description: "A pint-sized powerhouse with a taste for pancakes and destruction." },
+            { name: "Minion Horde", description: "A swarm of six blue fliers, overwhelming in numbers." },
+            { name: "Minions", description: "A trio of blue-winged attackers, quick and cheap." },
+            { name: "Mirror", description: "A magical card that lets you play your last card again, for a cost." },
+            { name: "Mighty Miner", description: "A burly digger who can tunnel to the other side and brings a bomb for good measure." },
+            { name: "Mother Witch", description: "She curses enemies, turning them into piglets to fight for you." },
+            { name: "Musketeer", description: "A sharpshooter with a trusty musket, strong against air and ground." },
+            { name: "Night Witch", description: "Summons bats and swings her staff, haunting the battlefield even after defeat." },
+            { name: "P.E.K.K.A", description: "A steel juggernaut with a single-minded focus and massive sword." },
+            { name: "Poison", description: "A toxic cloud that damages and slows all caught within." },
+            { name: "Prince", description: "A charging knight whose lance deals double damage on the first hit." },
+            { name: "Princess", description: "A royal archer with flaming arrows and the longest reach in the arena." },
+            { name: "Rage", description: "A spell that whips your troops into a frenzy, making them faster and stronger." },
+            { name: "Ram Rider", description: "A duo: one lassos enemies, the other smashes into buildings." },
+            { name: "Rascals", description: "A tough guy and two mischievous girls, working together to overwhelm foes." },
+            { name: "Rocket", description: "A high-damage missile that obliterates a small area with a boom." },
+            { name: "Royal Delivery", description: "A package drops from the sky, bringing a Royal Recruit to the fight." },
+            { name: "Royal Ghost", description: "An invisible attacker who reveals himself only to strike." },
+            { name: "Royal Giant", description: "A bearded brute who brings his own cannon to the party." },
+            { name: "Royal Hogs", description: "A herd of piggies that charge down lanes, hungry for towers." },
+            { name: "Royal Recruits", description: "A squad of shielded soldiers, splitting to defend both lanes." },
+            { name: "Skeleton Army", description: "A horde of fragile but numerous skeletons, overwhelming single targets." },
+            { name: "Skeleton Barrel", description: "A flying cask that drops a pile of skeletons on impact." },
+            { name: "Skeleton Dragons", description: "Twin fliers that breathe fire in bursts." },
+            { name: "Skeleton King", description: "A bony monarch who can summon an army from the fallen." },
+            { name: "Skeletons", description: "A trio of quick, cheap boneheads, perfect for distractions." },
+            { name: "Sparky", description: "A slow-rolling machine that charges up a devastating electric blast." },
+            { name: "Spear Goblins", description: "A pair of green throwers, poking from a distance." },
+            { name: "Tesla", description: "A hidden tower that zaps enemies with electricity when they get close." },
+            { name: "The Log", description: "A rolling log that crushes everything in its path, ground only." },
+            { name: "Three Musketeers", description: "A trio of sharpshooters, expensive but powerful when together." },
+            { name: "Tornado", description: "A swirling wind that pulls enemies to its center, disrupting formations." },
+            { name: "Valkyrie", description: "A spinning warrior with an axe, clearing out swarms around her." },
+            { name: "Wall Breakers", description: "Two daring skeletons with bombs, sprinting for the nearest wall." },
+            { name: "Witch", description: "Summons skeletons and blasts enemies with dark magic." },
+            { name: "Wizard", description: "A fire-flinging mage with splash damage and a stylish beard." },
+            { name: "X-Bow", description: "A siege weapon that locks onto targets from afar, raining bolts." },
+            { name: "Zappies", description: "A trio of little machines that stun enemies with every shot." },
+            { name: "Zap", description: "A quick jolt that damages and stuns all in a small area." }
+        ];
+        let currentCard = 0;
+        function showCard() {
+            document.getElementById('card-description').textContent = cards[currentCard].description;
+            document.getElementById('user-guess').value = '';
+            document.getElementById('result').textContent = '';
+            updateDropdown();
+        }
+        function submitGuess() {
+            const guess = document.getElementById('user-guess').value.trim().toLowerCase();
+            const answer = cards[currentCard].name.toLowerCase();
+            if (guess === answer) {
+                document.getElementById('result').textContent = 'Correct! 🎉';
+                document.getElementById('result').style.color = '#43a047';
+            } else {
+                document.getElementById('result').textContent = `Wrong! The answer was: ${cards[currentCard].name}`;
+                document.getElementById('result').style.color = '#e53935';
+            }
+        }
+        function nextCard() {
+            currentCard = Math.floor(Math.random() * cards.length);
+            showCard();
+        }
+        function updateDropdown() {
+            const input = document.getElementById('user-guess').value.trim().toLowerCase();
+            const dropdown = document.getElementById('card-dropdown');
+            dropdown.innerHTML = '';
+            let matches = cards.filter(card => card.name.toLowerCase().includes(input));
+            if (input === '') matches = cards;
+            matches.forEach(card => {
+                const option = document.createElement('option');
+                option.value = card.name;
+                option.textContent = card.name;
+                dropdown.appendChild(option);
+            });
+            dropdown.style.display = matches.length ? 'block' : 'none';
+        }
+        function selectDropdownOption() {
+            const dropdown = document.getElementById('card-dropdown');
+            const selected = dropdown.options[dropdown.selectedIndex];
+            if (selected) {
+                document.getElementById('user-guess').value = selected.value;
+                updateDropdown();
+            }
+        }
+        window.onload = showCard;
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Trainer</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #fff;
+            margin-top: 2em;
+            font-size: 2.5em;
+        }
+        #puzzle-container {
+            background: #fff;
+            border-radius: 16px;
+            display: inline-block;
+            padding: 2em 3em;
+            margin: 2em 0;
+            box-shadow: 0 8px 32px rgba(44,47,74,0.3);
+        }
+        #chess-board {
+            margin: 1em auto 2em auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(44,47,74,0.15);
+            max-width: 320px;
+            width: 100%;
+        }
+        input[type="text"] {
+            padding: 0.7em 1em;
+            font-size: 1em;
+            border-radius: 8px;
+            border: 2px solid #232526;
+            margin-bottom: 0.5em;
+            width: 60%;
+            max-width: 200px;
+        }
+        button {
+            background: #232526;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 1em 2em;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(44,47,74,0.15);
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #414345;
+        }
+        #result {
+            margin-top: 1em;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chess Puzzle Trainer</h1>
+    <div id="puzzle-container">
+    <div id="chess-board"></div>
+    <div id="puzzle-description">Find the best move! Drag and drop pieces to play.</div>
+    <div id="result"></div>
+    <button onclick="nextPuzzle()" style="margin-top:2em;">Next Puzzle</button>
+    </div>
+    <footer>
+        <p style="color:#fff;margin-top:3em;">Made with ❤️ by GitHub Copilot</p>
+    </footer>
+    <script>
+    // New pool: actual tactics (win material or mate)
+    const puzzles = [
+        { fen: "r1bq1rk1/ppp2ppp/2n2n2/3pp3/3P4/2P1PN2/PP1N1PPP/R1BQ1RK1 w - - 0 8", solution: ["dxe5"] }, // Win pawn
+        { fen: "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 4", solution: ["Nxe5"] }, // Win pawn
+        { fen: "rnbqkb1r/ppp2ppp/4pn2/3p4/3P4/2N1PN2/PPP2PPP/R1BQKB1R b KQkq - 2 4", solution: ["Ne4"] }, // Fork
+        { fen: "r1bq1rk1/ppp2ppp/2n2n2/3pp3/3P4/2P1PN2/PP1N1PPP/R1BQ1RK1 w - - 0 8", solution: ["Nxe5"] }, // Win pawn
+        { fen: "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 4 4", solution: ["Bxf2+"] }, // Sacrifice
+        { fen: "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 2 3", solution: ["Qh4"] }, // Mate threat
+        { fen: "r1bq1rk1/ppp2ppp/2n2n2/3pp3/3P4/2P1PN2/PP1N1PPP/R1BQ1RK1 w - - 0 8", solution: ["dxe5"] }, // Win pawn
+        { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 2 3", solution: ["Nxe4"] }, // Win pawn
+        { fen: "r3r1k1/pp1q1ppp/2n2n2/2bp4/8/2N1PN2/PPQ2PPP/2RR2K1 w - - 0 1", solution: ["Nxd5"] }, // Fork
+        { fen: "r1bq1rk1/ppp2ppp/2n2n2/3pp3/3P4/2P1PN2/PP1N1PPP/R1BQ1RK1 b - - 0 8", solution: ["e4"] } // Win piece
+    ];
+        let currentPuzzle = 0;
+        let boardState = null;
+        let selected = null;
+
+        function showPuzzle() {
+            boardState = fenToBoard(puzzles[currentPuzzle].fen);
+            selected = null;
+            drawInteractiveBoard();
+            document.getElementById('result').textContent = '';
+        }
+
+        // Convert FEN to 2D array board
+        function fenToBoard(fen) {
+            const rows = fen.split(' ')[0].split('/');
+            const board = [];
+            for (let r = 0; r < 8; r++) {
+                const row = [];
+                for (const ch of rows[r]) {
+                    if (!isNaN(ch)) {
+                        for (let i = 0; i < parseInt(ch); i++) row.push(null);
+                    } else {
+                        row.push(ch);
+                    }
+                }
+                board.push(row);
+            }
+            return board;
+        }
+
+        // Draw interactive chessboard
+        function drawInteractiveBoard() {
+            const pieceUnicode = {
+                'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+                'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+            };
+            const squareSize = 48;
+            let svg = `<svg width="${squareSize*8}" height="${squareSize*8}" viewBox="0 0 ${squareSize*8} ${squareSize*8}">`;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const color = (r + c) % 2 === 0 ? '#f0d9b5' : '#b58863';
+                    let highlight = '';
+                    if (selected && selected[0] === r && selected[1] === c) {
+                        highlight = 'stroke: #2196f3; stroke-width: 4;';
+                    }
+                    svg += `<rect x="${c*squareSize}" y="${r*squareSize}" width="${squareSize}" height="${squareSize}" fill="${color}" ${highlight}/>`;
+                    const piece = boardState[r][c];
+                    if (piece) {
+                        svg += `<text x="${c*squareSize+squareSize/2}" y="${r*squareSize+squareSize*0.75}" font-size="36" text-anchor="middle" dominant-baseline="middle" cursor="pointer" onclick="onSquareClick(${r},${c})">${pieceUnicode[piece]}</text>`;
+                    } else {
+                        svg += `<rect x="${c*squareSize}" y="${r*squareSize}" width="${squareSize}" height="${squareSize}" fill="transparent" onclick="onSquareClick(${r},${c})"/>`;
+                    }
+                }
+            }
+            svg += '</svg>';
+            document.getElementById('chess-board').innerHTML = svg;
+        }
+
+        // Handle square click for moving pieces
+        window.onSquareClick = function(r, c) {
+            if (!selected) {
+                if (boardState[r][c]) {
+                    selected = [r, c];
+                    drawInteractiveBoard();
+                }
+            } else {
+                if (selected[0] === r && selected[1] === c) {
+                    selected = null;
+                    drawInteractiveBoard();
+                    return;
+                }
+                // Move piece
+                const piece = boardState[selected[0]][selected[1]];
+                boardState[r][c] = piece;
+                boardState[selected[0]][selected[1]] = null;
+                selected = null;
+                drawInteractiveBoard();
+                checkSolution();
+            }
+        }
+
+        // Check if the move matches the solution
+        function checkSolution() {
+            // Convert board to FEN for move validation (simple, only for one move)
+            // For now, just check if the solution piece is on the correct square
+            // (A real chess engine would be needed for full validation)
+            // We'll check if the move matches the solution move string
+            // For now, just show 'Move played!' as feedback
+            document.getElementById('result').textContent = 'Move played! (No engine validation)';
+        }
+        // submitMove removed; moves are now interactive
+        function nextPuzzle() {
+            currentPuzzle = Math.floor(Math.random() * puzzles.length);
+            showPuzzle();
+        }
+        window.onload = showPuzzle;
+    </script>
+</body>
+</html>
